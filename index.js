@@ -162,7 +162,7 @@ function variableMismatchError(component, specificVar) {
 // and only add it to the correcy query, we just don't support that yet.
 function multipleQueriesError() {
   return new Error(
-    'You have defined multiple queries in one request and are also using variables. At the moment, we do not support the use of variables with multiple queries. Please either consolidate to one query per request, or make a PR to @hashicorp/nextjs-scripts to add this functionalty.'
+    'You have defined multiple queries in one request and are also using variables. At the moment, we do not support the use of variables with multiple queries. Please either consolidate to one query per request, or make a PR to to add this functionalty.'
   )
 }
 
