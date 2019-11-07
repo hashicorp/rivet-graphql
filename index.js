@@ -28,7 +28,7 @@ module.exports = function Rivet(url, options) {
 function temporary_processFragments(fragments) {
   if (fragments.length)
     console.warn(
-      '[nextjs-scripts/dato] The "fragments" argument is deprecated, please use "dependencies" instead.'
+      '[rivet] The "fragments" argument is deprecated, please use "dependencies" instead.'
     )
   return [].concat(fragments)
 }

@@ -1,10 +1,10 @@
 {
   "name": "rivet-graphql",
   "description": "a relay-like graphql data loading system for nextjs",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "author": "Jeff Escalante",
   "bugs": {
-    "url": "https://github.com/hashicorp/next-plugin-rivet/issues"
+    "url": "https://github.com/hashicorp/rivet-graphql/issues"
   },
   "dependencies": {
     "graphql": "^14.5.8",
@@ -14,7 +14,7 @@
     "jest": "^24.9.0",
     "rewire": "^4.0.1"
   },
-  "homepage": "https://github.com/hashicorp/next-plugin-rivet#readme",
+  "homepage": "https://github.com/hashicorp/rivet-graphql#readme",
   "keywords": [
     "data",
     "graphql",
@@ -25,7 +25,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hashicorp/next-plugin-rivet.git"
+    "url": "git+https://github.com/hashicorp/rivet-graphql.git"
   },
   "scripts": {
     "test": "jest"
