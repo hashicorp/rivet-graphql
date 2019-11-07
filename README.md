@@ -1,4 +1,4 @@
-<img src='https://p176.p0.n0.cdn.getcloudapp.com/items/JruweZDo/rivet-logo.svg?v=8bd8497297c7ba531d74fd98f6cc47b1' width='300' />
+<img src='https://p176.p0.n0.cdn.getcloudapp.com/items/mXu7GOBx/rivert-logo.svg?v=3113465ffbe401a4918b80694db76467' width='300' />
 
 A small, light, [relay-like](https://relay.dev) library for data fetching. Relies on strong conventions in which components define their data needs.
 
