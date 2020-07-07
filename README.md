@@ -2,7 +2,7 @@
 
 A small, light, [relay-like](https://relay.dev) library for data fetching. Relies on strong conventions in which components define their data needs.
 
-Rivet was built for and works best in a system in which you fetch all of your data **at the page level**, preferably in a single query, then pass down the data as needed to the components that use it. Below we'll take a tour of a sample implementation of a sample implementation of Rivet within a React app, from bottom to top. We'll start with a small, simple component, move up to a larger, more complex component that uses the simple component as a dependency, then finally to a page that implements the more complex component. We'll start with the simple component, `Button`:
+Rivet was built for and works best in a system in which you fetch all of your data **at the page level**, preferably in a single query, then pass down the data as needed to the components that use it. Below we'll take a tour of a sample implementation of Rivet within a React app, from bottom to top. We'll start with a small, simple component, move up to a larger, more complex component that uses the simple component as a dependency, then finally to a page that implements the more complex component. We'll start with the simple component, `Button`:
 
 ```jsx
 import fragment from './fragment.graphql'
@@ -16,7 +16,7 @@ Button.fragmentSpec = { fragment }
 export default Button
 ```
 
-And here's `fragment.graphql`, assuming that this setup uses a raw string loader for graphql files. This is not required and the graphql query can be used directly as a string within the component, colocating allows for nice separation of concerns and better syntax highlighting though.
+And here's `fragment.graphql`, assuming that this setup uses a raw string loader for graphql files. This is not required and the graphql query can be used directly as a string within the component, but colocating allows for nice separation of concerns and better syntax highlighting.
 
 ```graphql
 fragment buttonFields on Button {
@@ -96,13 +96,13 @@ export default SomePage({ title, personAndButtonData }) {
   </>)
 }
 
-SomePage.getInitialProps = async () => {
+export async function getStaticProps() {
   const result = await rivetQuery({
     query,
     dependencies: [PersonAndButton],
     variables: { name: 'Hingle McCringleberry' }
   })
-  return result
+  return { props: { ...result } }
 }
 ```
 
@@ -117,7 +117,7 @@ query SomePage {
 }
 ```
 
-So here's where we make the request. We pull down `fetch` and run it within `getInitialProps`. Let's break down the arguments it takes:
+So here's where we make the request. We pull down `fetch` and run it within `getStaticProps`. Let's break down the arguments it takes:
 
 - `query` _(String, required)_ - the primary graphql query for the page
 - `dependencies` _(Array, optional)_ - if you are using components on the page that require data, you should import each component and pass it in here to ensure all the component's data is fetched properly.
