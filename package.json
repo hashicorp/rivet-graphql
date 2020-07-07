@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "jest": "^26.1.0",
+    "release": "^6.1.0",
     "rewire": "^5.0.0"
   },
   "homepage": "https://github.com/hashicorp/rivet-graphql#readme",
@@ -28,6 +29,9 @@
     "url": "git+https://github.com/hashicorp/rivet-graphql.git"
   },
   "scripts": {
+    "release:major": "release major",
+    "release:minor": "release minor",
+    "release:patch": "release patch",
     "test": "jest"
   }
 }
