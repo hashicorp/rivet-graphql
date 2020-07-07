@@ -3,6 +3,7 @@ const { parse, parseType } = require('graphql/language/parser')
 const { print } = require('graphql/language/printer')
 
 module.exports = function Rivet(url, options) {
+  if (!options.timeout) options.timeout = 30000
   const client = new GraphQLClient(url, options)
 
   function fetch({ query, fragments = [], dependencies = [], variables }) {
@@ -39,8 +40,8 @@ function extractFragmentSpecs(dependencies) {
 
   // filter out any dependencies that don't have a fragment spec
   return dependencies
-    .filter(d => d.fragmentSpec)
-    .map(d => {
+    .filter((d) => d.fragmentSpec)
+    .map((d) => {
       return Object.assign({}, d.fragmentSpec, { __original: d })
     })
 }
@@ -87,7 +88,7 @@ function processVariables(dependencies, variables, query) {
   Object.entries(vars).map(([_name, _type]) => {
     const variable = {
       kind: 'Variable',
-      name: { kind: 'Name', value: _name }
+      name: { kind: 'Name', value: _name },
     }
     const type = parseType(_type)
 
@@ -97,7 +98,7 @@ function processVariables(dependencies, variables, query) {
     ast.definitions[0].variableDefinitions.push({
       kind: 'VariableDefinition',
       variable,
-      type
+      type,
     })
   })
 
@@ -143,7 +144,7 @@ function _findVariables(_dependencies, variables) {
 function variableMismatchError(component, specificVar) {
   const fragmentName = parse(component.fragment).definitions[0].name.value
   const fragmentVars = Object.keys(component.requiredVariables).map(
-    v => `"${v}"`
+    (v) => `"${v}"`
   )
   return new Error(
     `The fragment "${fragmentName}" requires ${

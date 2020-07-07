@@ -47,7 +47,7 @@ function PersonAndButton({ person, button }) {
 PersonAndButton.fragmentSpec = {
   fragment,
   dependencies: [Button],
-  requiredVariables: { name: 'String!' }
+  requiredVariables: { name: 'String!' },
 }
 
 export default PersonAndButton
@@ -73,14 +73,16 @@ Additionally, we need a variable to filter down a list of people to just one per
 Let's put it all together by moving up to the page level where the query is made. First, we define the configuration for rivet in a separate file so it can easily be shared between multiple components:
 
 ```js
-import rivet from 'rivert-graphql'
+import rivet from 'rivet-graphql'
 
 export default rivet('https://graphql.yourapi.com', {
   /* options */
 })
 ```
 
-This library uses [graphql-request](https://github.com/prisma-labs/graphql-request) under the hood for configuration -- see the docs for graphql-request for more info on which additional options can be passed in. Now let's look at a page, where we make our base level query. We will show an example using [nextjs](https://nextjs.org/) here. It's worth noting that Rivet is not coupled to nextjs, the `rivetQuery` function simply returns a promise which can be handled in any manner that's needed.
+This library uses [graphql-request](https://github.com/prisma-labs/graphql-request) under the hood for configuration -- see the docs for graphql-request for more info on which additional options can be passed in. This library additionally defaults the `timeout` option to 30 seconds.
+
+Now let's look at a page, where we make our base level query. We will show an example using [nextjs](https://nextjs.org/) here. It's worth noting that Rivet is not coupled to nextjs, the `rivetQuery` function simply returns a promise which can be handled in any manner that's needed.
 
 ```jsx
 import rivetQuery from '../rivet-config'

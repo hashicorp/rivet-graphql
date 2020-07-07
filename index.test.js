@@ -1,5 +1,7 @@
 const rewire = require('rewire')
 const rivet = rewire('./')
+const http = require('http')
+const { promisify } = require('util')
 
 test('custom fetch function with single fragment', () => {
   const query = 'test query'
@@ -31,12 +33,12 @@ test('allows dependencies with no fragment defined', () => {
     {
       fragmentSpec: {
         dependencies: [
-          { fragmentSpec: { fragment: 'fragment test on Test { test }' } }
-        ]
-      }
-    }
+          { fragmentSpec: { fragment: 'fragment test on Test { test }' } },
+        ],
+      },
+    },
   ]
-  testFetchMock({ query, dependencies: deps }, queryResult => {
+  testFetchMock({ query, dependencies: deps }, (queryResult) => {
     expect(queryResult).toBe(`query Foo { alert { wow } }
 fragment test on Test { test }`)
   })
@@ -48,9 +50,9 @@ test('handles "components" parameter errors', () => {
     {
       fragmentSpec: {
         fragment: 'fragment c1 on Test { test }',
-        requiredVariables: { productId: 'ItemId!', other: 'String!' }
-      }
-    }
+        requiredVariables: { productId: 'ItemId!', other: 'String!' },
+      },
+    },
   ]
 
   expect(() => testFetchMock({ query, dependencies }, () => {})).toThrow(
@@ -69,9 +71,9 @@ test('handles "components" parameter errors', () => {
       query: 'foo',
       dependencies: {
         fragmentSpec: {
-          requiredVariables: { productId: 'ItemId!', other: 'String!' }
-        }
-      }
+          requiredVariables: { productId: 'ItemId!', other: 'String!' },
+        },
+      },
     })
   ).toThrow(
     'The "dependencies" argument must be an array, the following dependency argument is not valid: {"fragmentSpec":{"requiredVariables":{"productId":"ItemId!","other":"String!"}}}'
@@ -83,12 +85,12 @@ test("skips any components that don't have a fragmentSpec property", async () =>
 
   const d1 = function Test() {}
   d1.fragmentSpec = {
-    fragment: 'fragment d1 on Test { test }'
+    fragment: 'fragment d1 on Test { test }',
   }
 
   const d2 = function Test2() {}
 
-  return testFetchMock({ query, dependencies: [d1, d2] }, queryResult => {
+  return testFetchMock({ query, dependencies: [d1, d2] }, (queryResult) => {
     expect(queryResult).toBe(`query Foo { alert { wow } }
 fragment d1 on Test { test }`)
   })
@@ -100,24 +102,24 @@ test('handles the "components" parameter correctly', async () => {
   const d1 = function Test() {}
   d1.fragmentSpec = {
     fragment: 'fragment d1 on Test { test }',
-    requiredVariables: { other: 'String!', foo: 'Bar' }
+    requiredVariables: { other: 'String!', foo: 'Bar' },
   }
 
   class d2 {}
   d2.fragmentSpec = {
-    fragment: 'fragment d2 on Test { test }'
+    fragment: 'fragment d2 on Test { test }',
   }
 
   function d3() {}
   d3.fragmentSpec = {
     fragment: 'fragment d3 on Test { test }',
-    dependencies: [d4]
+    dependencies: [d4],
   }
 
   function d4() {}
   d4.fragmentSpec = {
     fragment: 'fragment d4 on Test { test }',
-    requiredVariables: { levelThree: 'Wow' }
+    requiredVariables: { levelThree: 'Wow' },
   }
 
   const deps = [d1, d2, d3]
@@ -126,23 +128,23 @@ test('handles the "components" parameter correctly', async () => {
     {
       fragmentSpec: {
         fragment: 'fragment c1 on Test { test }',
-        dependencies: [deps[0], deps[1]]
-      }
+        dependencies: [deps[0], deps[1]],
+      },
     },
     {
       fragmentSpec: {
         fragment: 'fragment c2 on Test { test }',
         dependencies: [deps[2]],
-        requiredVariables: { productId: 'ItemId!', other: 'String!' }
-      }
+        requiredVariables: { productId: 'ItemId!', other: 'String!' },
+      },
     },
     {
       fragmentSpec: {
         fragment: 'fragment c3 on Test { test }',
         dependencies: [deps[0]],
-        requiredVariables: { other: 'String!', doge: 'Wow' }
-      }
-    }
+        requiredVariables: { other: 'String!', doge: 'Wow' },
+      },
+    },
   ]
 
   return testFetchMock(
@@ -154,10 +156,10 @@ test('handles the "components" parameter correctly', async () => {
         other: 'test',
         doge: 'test',
         foo: 'test',
-        levelThree: 'test'
-      }
+        levelThree: 'test',
+      },
     },
-    queryResult => {
+    (queryResult) => {
       const expectedQuery = `query Foo($other: String!, $foo: Bar, $productId: ItemId!, $levelThree: Wow, $doge: Wow) {
   alert {
     wow
@@ -177,29 +179,58 @@ fragment c3 on Test { test }`
 })
 
 test('handles fetch errors with style and grace', () => {
-  return createTestInstance()({ query: 'query Foo { alert { wow } }' }).catch(
-    err =>
-      expect(err.response.errors[0].message).toBe(
-        "Field 'wow' doesn't exist on type 'AlertRecord'"
-      )
+  return createTestInstance()({
+    query: 'query Foo { alert { wow } }',
+  }).catch((err) =>
+    expect(err.response.errors[0].message).toBe(
+      "Field 'wow' doesn't exist on type 'AlertRecord'"
+    )
   )
 })
 
-function createTestInstance() {
-  return rivet('https://graphql.datocms.com', {
-    headers: { Authorization: '78d2968c99a076419fbb' },
-    cors: true
+test('times out infinitely hanging requests', () => {
+  // let's make a hanging api route
+  const server = http
+    .createServer((_, res) => setTimeout(40000, () => res.end('hello world')))
+    .listen(1234)
+
+  // and now we test it
+  return rivet('http://localhost:1234', { timeout: 1000 })({
+    query: 'test',
   })
+    .catch((err) => {
+      expect(err.toString()).toBe(
+        'FetchError: network timeout at: http://localhost:1234/'
+      )
+    })
+    .then(() => promisify(server.close.bind(server))())
+})
+
+function createTestInstance(options) {
+  return rivet(
+    'https://graphql.datocms.com',
+    Object.assign(
+      {
+        headers: { Authorization: '78d2968c99a076419fbb' },
+        cors: true,
+      },
+      options
+    )
+  )
 }
 
 function testFetchMock(params, cb) {
   class MockGraphQLClient {
     request(...args) {
       cb(...args)
+      return Promise.resolve()
     }
   }
 
-  rivet.__with__('GraphQLClient', MockGraphQLClient)(() => {
+  rivet.__with__(
+    'GraphQLClient',
+    MockGraphQLClient
+  )(() => {
     return createTestInstance()(params)
   })
 }
