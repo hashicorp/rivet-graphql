@@ -7,7 +7,6 @@
     "url": "https://github.com/hashicorp/rivet-graphql/issues"
   },
   "dependencies": {
-    "abort-controller": "^3.0.0",
     "graphql": "^15.3.0",
     "graphql-request": "^2.1.0-next.1"
   },
