@@ -203,8 +203,48 @@ test('times out infinitely hanging requests', () => {
         'FetchError: network timeout at: http://localhost:1234/'
       )
     })
-    .then(() => promisify(server.close.bind(server))())
+    .finally(() => promisify(server.close.bind(server))())
 })
+
+test('retries queries if they fail', () => {
+  let failCount = 2
+  const server = createTestGraphqlServer('test', failCount)
+
+  // and now we test it
+  return rivet('http://localhost:1234', { retryCount: failCount + 1 })({
+    query: 'query Foo { alert { wow } }',
+  })
+    .then((res) => {
+      expect(res).toEqual('test')
+    })
+    .finally(() => promisify(server.close.bind(server))())
+})
+
+test('still throws if all retries fail', () => {
+  let failCount = 2
+  const server = createTestGraphqlServer('test', failCount)
+
+  // and now we test it
+  return rivet('http://localhost:1234', { retryCount: failCount })({
+    query: 'test',
+  })
+    .catch((err) => {
+      expect(err.toString()).toEqual(
+        'Error: GraphQL Error (Code: 500): {"response":{"data":"test","status":500},"request":{"query":"test\\n"}}'
+      )
+    })
+    .finally(() => promisify(server.close.bind(server))())
+})
+
+function createTestGraphqlServer(returnValue, failCount = 0) {
+  return http
+    .createServer((_, res) => {
+      if (failCount-- > 0) res.statusCode = 500
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify({ data: returnValue }))
+    })
+    .listen(1234)
+}
 
 function createTestInstance(options) {
   return rivet(
