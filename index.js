@@ -4,6 +4,9 @@ const { print } = require('graphql/language/printer')
 
 module.exports = function Rivet(url, options) {
   if (!options.timeout) options.timeout = 30000
+  const retryCount = options.retryCount || 0
+  delete options.retryCount
+
   const client = new GraphQLClient(url, options)
 
   function fetch({ query, fragments = [], dependencies = [], variables }) {
@@ -13,10 +16,15 @@ module.exports = function Rivet(url, options) {
     const _dependencies = processDependencies(dependencies)
     const _query = processVariables(dependencies, variables, query)
 
-    return client.request(
-      `${_query}\n${[..._fragments, ..._dependencies].join('\n')}`,
-      variables
-    )
+    const queryAsString = `${_query}\n${[..._fragments, ..._dependencies].join(
+      '\n'
+    )}`
+
+    if (retryCount) {
+      return requestWithRetry(retryCount, client, queryAsString, variables)
+    } else {
+      return client.request(queryAsString, variables)
+    }
   }
 
   fetch.client = client
@@ -155,6 +163,33 @@ function variableMismatchError(component, specificVar) {
       specificVar ? `"${specificVar}"` : fragmentVars.join(', ')
     }.`
   )
+}
+
+// request with retries if the query fails
+async function requestWithRetry(retryCount, client, ...args) {
+  const uuid = _createUUID()
+  const maxRetries = retryCount
+  for (let retry = 1; retry <= maxRetries; retry++) {
+    try {
+      return await client.request(...args)
+    } catch (err) {
+      console.log(`[${uuid}] Failed retry #${retry}, retrying...`)
+      const isLastAttempt = retry === maxRetries
+      if (isLastAttempt) {
+        console.error(`[${uuid}] Failed all retries, throwing!`)
+        throw err
+      }
+    }
+  }
+}
+
+// used to identify a retried request
+function _createUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
 // We error if there were multiple queries, since graphql errors both
