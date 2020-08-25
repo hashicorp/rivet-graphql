@@ -9,6 +9,14 @@ module.exports = function Rivet(url, options) {
 
   const client = new GraphQLClient(url, options)
 
+  if (retryCount) {
+    client.request = requestWithRetry.bind(
+      null,
+      retryCount,
+      client.request.bind(client)
+    )
+  }
+
   function fetch({ query, fragments = [], dependencies = [], variables }) {
     if (!query) throw fetchMissingQueryError()
 
@@ -16,15 +24,10 @@ module.exports = function Rivet(url, options) {
     const _dependencies = processDependencies(dependencies)
     const _query = processVariables(dependencies, variables, query)
 
-    const queryAsString = `${_query}\n${[..._fragments, ..._dependencies].join(
-      '\n'
-    )}`
-
-    if (retryCount) {
-      return requestWithRetry(retryCount, client, queryAsString, variables)
-    } else {
-      return client.request(queryAsString, variables)
-    }
+    return client.request(
+      `${_query}\n${[..._fragments, ..._dependencies].join('\n')}`,
+      variables
+    )
   }
 
   fetch.client = client
@@ -166,12 +169,12 @@ function variableMismatchError(component, specificVar) {
 }
 
 // request with retries if the query fails
-async function requestWithRetry(retryCount, client, ...args) {
+async function requestWithRetry(retryCount, originalRequest, ...args) {
   const uuid = _createUUID()
   const maxRetries = retryCount
   for (let retry = 1; retry <= maxRetries; retry++) {
     try {
-      return await client.request(...args)
+      return await originalRequest(...args)
     } catch (err) {
       console.log(`[${uuid}] Failed retry #${retry}, retrying...`)
       const isLastAttempt = retry === maxRetries

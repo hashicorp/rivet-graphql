@@ -236,6 +236,19 @@ test('still throws if all retries fail', () => {
     .finally(() => promisify(server.close.bind(server))())
 })
 
+test('standalone request with retries', () => {
+  let failCount = 2
+  const server = createTestGraphqlServer('test', failCount)
+
+  const r = rivet('http://localhost:1234', { retryCount: failCount + 1 })
+  return r.client
+    .request('test')
+    .then((res) => {
+      expect(res).toEqual('test')
+    })
+    .finally(() => promisify(server.close.bind(server))())
+})
+
 function createTestGraphqlServer(returnValue, failCount = 0) {
   return http
     .createServer((_, res) => {
