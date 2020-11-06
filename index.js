@@ -7,6 +7,36 @@ module.exports = function Rivet(url, options) {
   const retryCount = options.retryCount || 0
   delete options.retryCount
 
+  const client = configureClient(url, options, retryCount)
+  function fetch({
+    query,
+    fragments = [],
+    dependencies = [],
+    variables,
+    alternateUrl,
+  }) {
+    if (!query) throw fetchMissingQueryError()
+    const localClient = configureClient(
+      alternateUrl || url,
+      options,
+      retryCount
+    )
+    const _fragments = temporary_processFragments(fragments)
+    const _dependencies = processDependencies(dependencies)
+    const _query = processVariables(dependencies, variables, query)
+
+    return localClient.request(
+      `${_query}\n${[..._fragments, ..._dependencies].join('\n')}`,
+      variables
+    )
+  }
+
+  fetch.client = client
+
+  return fetch
+}
+
+function configureClient(url, options, retryCount) {
   const client = new GraphQLClient(url, options)
 
   if (retryCount) {
@@ -16,23 +46,7 @@ module.exports = function Rivet(url, options) {
       client.request.bind(client)
     )
   }
-
-  function fetch({ query, fragments = [], dependencies = [], variables }) {
-    if (!query) throw fetchMissingQueryError()
-
-    const _fragments = temporary_processFragments(fragments)
-    const _dependencies = processDependencies(dependencies)
-    const _query = processVariables(dependencies, variables, query)
-
-    return client.request(
-      `${_query}\n${[..._fragments, ..._dependencies].join('\n')}`,
-      variables
-    )
-  }
-
-  fetch.client = client
-
-  return fetch
+  return client
 }
 
 // Fragments are the simplest use case, the user must provide all fragments manually
