@@ -20,7 +20,7 @@ module.exports = function Rivet(url, options) {
   function fetch({ query, fragments = [], dependencies = [], variables }) {
     if (!query) throw fetchMissingQueryError()
 
-    const _fragments = temporary_processFragments(fragments)
+    const _fragments = processFragments(fragments)
     const _dependencies = processDependencies(dependencies)
     const _query = processVariables(dependencies, variables, query)
 
@@ -36,12 +36,7 @@ module.exports = function Rivet(url, options) {
 }
 
 // Fragments are the simplest use case, the user must provide all fragments manually
-// This is an un-ideal DX so it is deprecated.
-function temporary_processFragments(fragments) {
-  if (fragments.length)
-    console.warn(
-      '[rivet] The "fragments" argument is deprecated, please use "dependencies" instead.'
-    )
+function processFragments(fragments) {
   return [].concat(fragments)
 }
 
