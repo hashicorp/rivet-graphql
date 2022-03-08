@@ -10,7 +10,7 @@ const { print } = require('graphql/language/printer')
  * @typedef {Object} FragmentSpec
  * @property {string} [fragment]
  * @property {{ fragmentSpec?: FragmentSpec }[]} [dependencies]
- * @property {Record<string, any>} requiredVariables
+ * @property {Record<string, any>} [requiredVariables]
  */
 
 /**
@@ -39,7 +39,7 @@ module.exports = function Rivet(url, options) {
    * @param {string} params.query
    * @param {string[]} [params.fragments]
    * @param {{ fragmentSpec?: FragmentSpec }[]} [params.dependencies]
-   * @param {Record<string, any>} params.variables
+   * @param {Record<string, any>} [params.variables]
    */
   function fetch({ query, fragments = [], dependencies = [], variables }) {
     if (!query) throw fetchMissingQueryError()
