@@ -37,19 +37,17 @@ module.exports = function Rivet(url, options) {
    *
    * @param {Object} params
    * @param {string} params.query
-   * @param {string[]} [params.fragments]
    * @param {{ fragmentSpec?: FragmentSpec }[]} [params.dependencies]
    * @param {Record<string, any>} [params.variables]
    */
-  function fetch({ query, fragments = [], dependencies = [], variables }) {
+  function fetch({ query, dependencies = [], variables }) {
     if (!query) throw fetchMissingQueryError()
 
-    const _fragments = temporary_processFragments(fragments)
     const _dependencies = processDependencies(dependencies)
     const _query = processVariables(dependencies, variables, query)
 
     return client.request(
-      `${_query}\n${[..._fragments, ..._dependencies].join('\n')}`,
+      `${_query}\n${[..._dependencies].join('\n')}`,
       variables
     )
   }
@@ -57,21 +55,6 @@ module.exports = function Rivet(url, options) {
   fetch.client = client
 
   return fetch
-}
-
-// Fragments are the simplest use case, the user must provide all fragments manually
-// This is an un-ideal DX so it is deprecated.
-/**
- *
- * @param {string[]} fragments
- * @returns {string[]}
- */
-function temporary_processFragments(fragments) {
-  if (fragments.length)
-    console.warn(
-      '[rivet] The "fragments" argument is deprecated, please use "dependencies" instead.'
-    )
-  return [].concat(fragments)
 }
 
 /**
