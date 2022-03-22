@@ -1,7 +1,7 @@
 {
   "name": "rivet-graphql",
   "description": "a relay-like graphql data loading system for nextjs",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "author": "Jeff Escalante",
   "bugs": {
     "url": "https://github.com/hashicorp/rivet-graphql/issues"
