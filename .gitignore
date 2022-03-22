@@ -1,2 +1,4 @@
 node_modules
 .DS_Store
+index.d.ts
+index.d.ts.map

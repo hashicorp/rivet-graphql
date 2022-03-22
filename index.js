@@ -1,7 +1,23 @@
+//@ts-check
 let { GraphQLClient } = require('graphql-request')
 const { parse, parseType } = require('graphql/language/parser')
 const { print } = require('graphql/language/printer')
 
+/** @typedef { import("graphql-request/dist/types.dom").RequestInit} GQLRequestInit */
+/** @typedef { import("graphql-request").GraphQLClient } */
+
+/**
+ * @typedef {Object} FragmentSpec
+ * @property {string} [fragment]
+ * @property {{ fragmentSpec?: FragmentSpec }[]} [dependencies]
+ * @property {Record<string, any>} [requiredVariables]
+ */
+
+/**
+ *
+ * @param {string} url
+ * @param {GQLRequestInit & { timeout?: number, retryCount?: number }} options
+ */
 module.exports = function Rivet(url, options) {
   if (!options.timeout) options.timeout = 30000
   const retryCount = options.retryCount || 0
@@ -17,15 +33,23 @@ module.exports = function Rivet(url, options) {
     )
   }
 
-  function fetch({ query, fragments = [], dependencies = [], variables }) {
+  /**
+   *
+   * @template [T=any]
+   * @param {Object} params
+   * @param {string} params.query
+   * @param {{ fragmentSpec?: FragmentSpec }[]} [params.dependencies]
+   * @param {Record<string, any>} [params.variables]
+   * @returns {Promise<T>}
+   */
+  function fetch({ query, dependencies = [], variables }) {
     if (!query) throw fetchMissingQueryError()
 
-    const _fragments = temporary_processFragments(fragments)
     const _dependencies = processDependencies(dependencies)
     const _query = processVariables(dependencies, variables, query)
 
     return client.request(
-      `${_query}\n${[..._fragments, ..._dependencies].join('\n')}`,
+      `${_query}\n${[..._dependencies].join('\n')}`,
       variables
     )
   }
@@ -35,16 +59,10 @@ module.exports = function Rivet(url, options) {
   return fetch
 }
 
-// Fragments are the simplest use case, the user must provide all fragments manually
-// This is an un-ideal DX so it is deprecated.
-function temporary_processFragments(fragments) {
-  if (fragments.length)
-    console.warn(
-      '[rivet] The "fragments" argument is deprecated, please use "dependencies" instead.'
-    )
-  return [].concat(fragments)
-}
-
+/**
+ *
+ * @param {{ fragmentSpec?: FragmentSpec }[]} dependencies
+ */
 function extractFragmentSpecs(dependencies) {
   // throw an error if dependencies isn't an array
   if (!Array.isArray(dependencies)) throw dependenciesTypeError(dependencies)
@@ -59,6 +77,11 @@ function extractFragmentSpecs(dependencies) {
 
 // Go through component dependencies and extract all of the fragments that we need
 // to make the query. This is a recursive function to account for deep nested deps.
+/**
+ *
+ * @param {{ fragmentSpec?: FragmentSpec }[]} _dependencies
+ * @returns {string[]}
+ */
 function processDependencies(_dependencies) {
   const dependencies = extractFragmentSpecs(_dependencies)
   return dependencies.reduce((acc, component) => {
@@ -80,6 +103,13 @@ function processDependencies(_dependencies) {
 // Go through components and variables and ensure that the user has provided values
 // for all variables that components need. Then dynamically inject variables that
 // components depend on into the main query.
+/**
+ *
+ * @param {{ fragmentSpec?: FragmentSpec }[]} dependencies
+ * @param {Record<string, unknown>} variables
+ * @param {string} query
+ * @returns {string}
+ */
 function processVariables(dependencies, variables, query) {
   // First, we loop through dependencies to extract the variables they define
   // Along the way we throw clear errors if there are any variable mismatched
@@ -106,6 +136,7 @@ function processVariables(dependencies, variables, query) {
     // Add the AST nodes to the variable definitions at the top of the query.
     // Worth noting it only does this for the first query defined in the file,
     // but we throw if there is more than one anyway.
+    //@ts-ignore
     ast.definitions[0].variableDefinitions.push({
       kind: 'VariableDefinition',
       variable,
@@ -119,6 +150,12 @@ function processVariables(dependencies, variables, query) {
 
 // Internal function, recursively extracts "variables" arguments from a set of components
 // and its deep nested dependencies.
+/**
+ *
+ * @param {{ fragmentSpec?: FragmentSpec }[]} _dependencies
+ * @param {Record<string, any>} variables
+ * @returns {Record<string, any>}
+ */
 function _findVariables(_dependencies, variables) {
   const dependencies = extractFragmentSpecs(_dependencies)
 
@@ -153,6 +190,7 @@ function _findVariables(_dependencies, variables) {
 // Super clear error messages when component dependencies ask for variables that
 // are not provided in the fetch query.
 function variableMismatchError(component, specificVar) {
+  //@ts-ignore
   const fragmentName = parse(component.fragment).definitions[0].name.value
   const fragmentVars = Object.keys(component.requiredVariables).map(
     (v) => `"${v}"`
