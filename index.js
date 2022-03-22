@@ -35,10 +35,12 @@ module.exports = function Rivet(url, options) {
 
   /**
    *
+   * @template [T=any]
    * @param {Object} params
    * @param {string} params.query
    * @param {{ fragmentSpec?: FragmentSpec }[]} [params.dependencies]
    * @param {Record<string, any>} [params.variables]
+   * @returns {Promise<T>}
    */
   function fetch({ query, dependencies = [], variables }) {
     if (!query) throw fetchMissingQueryError()
