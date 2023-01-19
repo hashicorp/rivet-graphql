@@ -2,30 +2,7 @@ const rewire = require('rewire')
 const rivet = rewire('./')
 const http = require('http')
 const { promisify } = require('util')
-
-test('custom fetch function with single fragment', () => {
-  const query = 'test query'
-  const fragments = 'test fragment'
-  return testFetchMock(
-    { query, fragments, variables: { foo: 'bar' } },
-    (queryResult, vars) => {
-      expect(queryResult).toBe(`${query}\n${fragments}`)
-      expect(vars.foo).toBe('bar')
-    }
-  )
-})
-
-test('custom fetch function with multiple fragments', () => {
-  const query = 'test query'
-  const fragments = ['f1', 'f2', 'f3']
-  return testFetchMock(
-    { query, fragments, variables: { foo: 'bar' } },
-    (queryResult, vars) => {
-      expect(queryResult).toBe(`${query}\n${fragments.join('\n')}`)
-      expect(vars.foo).toBe('bar')
-    }
-  )
-})
+const { parse } = require('graphql/language/parser')
 
 test('allows dependencies with no fragment defined', () => {
   const query = 'query Foo { alert { wow } }'
@@ -249,6 +226,70 @@ test('standalone request with retries', () => {
     .finally(() => promisify(server.close.bind(server))())
 })
 
+test('allows GraphQL DocumentNode queries', () => {
+  const query = parse('query Foo { alert { wow } }')
+  testFetchMock({ query }, (queryResult) => {
+    expect(queryResult).toBe(`query Foo {
+  alert {
+    wow
+  }
+}
+
+`)
+  })
+})
+
+test('allows GraphQL DocumentNode queries with dependencies', () => {
+  const query = parse('query Foo { alert { wow } }')
+  const dependencies = [
+    {
+      fragmentSpec: {
+        dependencies: [
+          { fragmentSpec: { fragment: 'fragment test on Test { test }' } },
+        ],
+      },
+    },
+  ]
+
+  testFetchMock({ query, dependencies }, (queryResult) => {
+    expect(queryResult).toBe(`query Foo {
+  alert {
+    wow
+  }
+}
+
+fragment test on Test { test }`)
+  })
+})
+
+test('allows GraphQL DocumentNode queries with DocumentNode dependencies', () => {
+  const query = parse('query Foo { alert { wow } }')
+  const dependencies = [
+    {
+      fragmentSpec: {
+        dependencies: [
+          {
+            fragmentSpec: { fragment: parse('fragment test on Test { test }') },
+          },
+        ],
+      },
+    },
+  ]
+
+  testFetchMock({ query, dependencies }, (queryResult) => {
+    expect(queryResult).toBe(`query Foo {
+  alert {
+    wow
+  }
+}
+
+fragment test on Test {
+  test
+}
+`)
+  })
+})
+
 function createTestGraphqlServer(returnValue, failCount = 0) {
   return http
     .createServer((_, res) => {
@@ -264,7 +305,7 @@ function createTestInstance(options) {
     'https://graphql.datocms.com',
     Object.assign(
       {
-        headers: { Authorization: '78d2968c99a076419fbb' },
+        headers: { Authorization: '2f7896a6b4f1948af64900319aed60' },
         cors: true,
       },
       options
