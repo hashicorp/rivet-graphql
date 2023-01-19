@@ -11,6 +11,7 @@
     "graphql-request": "^3.0.0"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.4.8",
     "@changesets/cli": "^2.26.0",
     "jest": "^26.4.2",
     "rewire": "^5.0.0",
