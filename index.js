@@ -9,7 +9,7 @@ const { print } = require('graphql/language/printer')
 
 /**
  * @typedef {Object} FragmentSpec
- * @property {string} [fragment]
+ * @property {string | DocumentNode} [fragment]
  * @property {{ fragmentSpec?: FragmentSpec }[]} [dependencies]
  * @property {Record<string, any>} [requiredVariables]
  */
@@ -88,7 +88,11 @@ function processDependencies(_dependencies) {
   return dependencies.reduce((acc, component) => {
     // Add the main fragment if one is provided
     if (component.fragment) {
-      acc.push(component.fragment)
+      acc.push(
+        typeof component.fragment === 'string'
+          ? component.fragment
+          : print(component.fragment)
+      )
     }
 
     // Recursively iterate through dependencies and collect all fragments

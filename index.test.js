@@ -262,6 +262,34 @@ fragment test on Test { test }`)
   })
 })
 
+test('allows GraphQL DocumentNode queries with DocumentNode dependencies', () => {
+  const query = parse('query Foo { alert { wow } }')
+  const dependencies = [
+    {
+      fragmentSpec: {
+        dependencies: [
+          {
+            fragmentSpec: { fragment: parse('fragment test on Test { test }') },
+          },
+        ],
+      },
+    },
+  ]
+
+  testFetchMock({ query, dependencies }, (queryResult) => {
+    expect(queryResult).toBe(`query Foo {
+  alert {
+    wow
+  }
+}
+
+fragment test on Test {
+  test
+}
+`)
+  })
+})
+
 function createTestGraphqlServer(returnValue, failCount = 0) {
   return http
     .createServer((_, res) => {
