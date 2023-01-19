@@ -4,6 +4,7 @@ const { parse, parseType } = require('graphql/language/parser')
 const { print } = require('graphql/language/printer')
 
 /** @typedef { import("graphql-request/dist/types.dom").RequestInit} GQLRequestInit */
+/** @typedef { import("graphql/language/ast").DocumentNode} DocumentNode */
 /** @typedef { import("graphql-request").GraphQLClient } */
 
 /**
@@ -37,7 +38,7 @@ module.exports = function Rivet(url, options) {
    *
    * @template [T=any]
    * @param {Object} params
-   * @param {string} params.query
+   * @param {string | DocumentNode} params.query
    * @param {{ fragmentSpec?: FragmentSpec }[]} [params.dependencies]
    * @param {Record<string, any>} [params.variables]
    * @returns {Promise<T>}
@@ -107,7 +108,7 @@ function processDependencies(_dependencies) {
  *
  * @param {{ fragmentSpec?: FragmentSpec }[]} dependencies
  * @param {Record<string, unknown>} variables
- * @param {string} query
+ * @param {string | DocumentNode} query
  * @returns {string}
  */
 function processVariables(dependencies, variables, query) {
@@ -116,11 +117,13 @@ function processVariables(dependencies, variables, query) {
   const vars = _findVariables(dependencies, variables)
 
   // If there are no variables, we can return
-  if (!Object.keys(vars).length) return query
+  if (!Object.keys(vars).length) {
+    return typeof query === 'string' ? query : print(query)
+  }
 
   // Otherwise, inject those variables into the query's params.
   // First we parse the query into an AST
-  const ast = parse(query)
+  const ast = typeof query === 'string' ? parse(query) : query
 
   // See function definition below for details
   if (ast.definitions.length > 1) throw multipleQueriesError()
