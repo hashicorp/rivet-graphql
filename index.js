@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) HashiCorp, Inc.
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 //@ts-check
 let { GraphQLClient } = require('graphql-request')
 const { parse, parseType } = require('graphql/language/parser')

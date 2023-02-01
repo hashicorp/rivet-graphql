@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) HashiCorp, Inc.
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 const rewire = require('rewire')
 const rivet = rewire('./')
 const http = require('http')
