@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@1.6.0/schema.json",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "hashicorp/rivet-graphql" }
+  ],
+  "commit": false,
+  "linked": [],
+  "access": "public",
+  "baseBranch": "master",
+  "updateInternalDependencies": "patch",
+  "ignore": [],
+  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
+    "useCalculatedVersionForSnapshots": true,
+    "onlyUpdatePeerDependentsWhenOutOfRange": true
+  }
+}
