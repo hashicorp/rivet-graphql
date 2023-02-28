@@ -32,6 +32,7 @@
     "url": "git+https://github.com/hashicorp/rivet-graphql.git"
   },
   "scripts": {
+    "release": "npm run generate:types && changeset publish",
     "release:canary": "npm run generate:types && changeset publish --tag canary",
     "test": "jest",
     "generate:types": "tsc -p ."
