@@ -36,7 +36,7 @@ export = function Rivet(
     )
   }
 
-  function fetch<T, V extends Variables = Variables>({
+  function fetch<T = any, V extends Variables = Variables>({
     query,
     dependencies = [],
     variables,
