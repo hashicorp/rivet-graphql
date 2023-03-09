@@ -3,28 +3,25 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-//@ts-check
-let { GraphQLClient } = require('graphql-request')
-const { parse, parseType } = require('graphql/language/parser')
-const { print } = require('graphql/language/printer')
+import { GraphQLClient, type Variables } from 'graphql-request'
+import { parse, parseType } from 'graphql/language/parser'
+import { print } from 'graphql/language/printer'
+import type { DocumentNode } from 'graphql'
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 
-/** @typedef { import("graphql-request/dist/types.dom").RequestInit} GQLRequestInit */
-/** @typedef { import("graphql/language/ast").DocumentNode} DocumentNode */
-/** @typedef { import("graphql-request").GraphQLClient } */
+interface FragmentSpec {
+  fragment?: string | DocumentNode
+  dependencies?: { fragmentSpec?: FragmentSpec }[]
+  requiredVariables?: Record<string, unknown>
+}
 
-/**
- * @typedef {Object} FragmentSpec
- * @property {string | DocumentNode} [fragment]
- * @property {{ fragmentSpec?: FragmentSpec }[]} [dependencies]
- * @property {Record<string, any>} [requiredVariables]
- */
-
-/**
- *
- * @param {string} url
- * @param {GQLRequestInit & { timeout?: number, retryCount?: number }} options
- */
-module.exports = function Rivet(url, options) {
+export = function Rivet(
+  url: string,
+  options: ConstructorParameters<typeof GraphQLClient>[1] & {
+    timeout?: number
+    retryCount?: number
+  }
+) {
   if (!options.timeout) options.timeout = 30000
   const retryCount = options.retryCount || 0
   delete options.retryCount
@@ -39,16 +36,15 @@ module.exports = function Rivet(url, options) {
     )
   }
 
-  /**
-   *
-   * @template [T=any]
-   * @param {Object} params
-   * @param {string | DocumentNode} params.query
-   * @param {{ fragmentSpec?: FragmentSpec }[]} [params.dependencies]
-   * @param {Record<string, any>} [params.variables]
-   * @returns {Promise<T>}
-   */
-  function fetch({ query, dependencies = [], variables }) {
+  function fetch<T = any, V extends Variables = Variables>({
+    query,
+    dependencies = [],
+    variables,
+  }: {
+    query: string | DocumentNode | TypedDocumentNode<T, V>
+    dependencies?: { fragmentSpec?: FragmentSpec }[]
+    variables?: Record<string, unknown>
+  }): Promise<T> {
     if (!query) throw fetchMissingQueryError()
 
     const _dependencies = processDependencies(dependencies)
@@ -143,7 +139,7 @@ function processVariables(dependencies, variables, query) {
       kind: 'Variable',
       name: { kind: 'Name', value: _name },
     }
-    const type = parseType(_type)
+    const type = parseType(_type as any)
 
     // Add the AST nodes to the variable definitions at the top of the query.
     // Worth noting it only does this for the first query defined in the file,
@@ -174,7 +170,7 @@ function _findVariables(_dependencies, variables) {
   return dependencies.reduce((acc, component) => {
     if (component.requiredVariables) {
       // If no variables are passed to fetch but dependencies define variables, error
-      if (!variables) throw variableMismatchError(component)
+      if (!variables) throw variableMismatchError(component, null)
 
       Object.entries(component.requiredVariables).map(([k, v]) => {
         // If variables are present but the one we need is missing, error
