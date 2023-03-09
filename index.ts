@@ -44,7 +44,7 @@ export = function Rivet(
     query: string | DocumentNode | TypedDocumentNode<T, V>
     dependencies?: { fragmentSpec?: FragmentSpec }[]
     variables?: Record<string, unknown>
-  }): Promise<V> {
+  }): Promise<T> {
     if (!query) throw fetchMissingQueryError()
 
     const _dependencies = processDependencies(dependencies)
