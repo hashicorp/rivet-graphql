@@ -9,7 +9,7 @@
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.1.2",
     "graphql": "^16.6.0",
-    "graphql-request": "^5.2.0"
+    "graphql-request": "~5.1.0"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.4.8",
