@@ -147,7 +147,6 @@ test('handles the "components" parameter correctly', async () => {
     wow
   }
 }
-
 fragment c1 on Test { test }
 fragment d1 on Test { test }
 fragment d2 on Test { test }
@@ -212,7 +211,7 @@ test('still throws if all retries fail', () => {
   })
     .catch((err) => {
       expect(err.toString()).toEqual(
-        'Error: GraphQL Error (Code: 500): {"response":{"data":"test","status":500},"request":{"query":"test\\n"}}'
+        'Error: GraphQL Error (Code: 500): {"response":{"data":"test","status":500,"headers":{}},"request":{"query":"test\\n"}}'
       )
     })
     .finally(() => promisify(server.close.bind(server))())
@@ -239,7 +238,6 @@ test('allows GraphQL DocumentNode queries', () => {
     wow
   }
 }
-
 `)
   })
 })
@@ -262,7 +260,6 @@ test('allows GraphQL DocumentNode queries with dependencies', () => {
     wow
   }
 }
-
 fragment test on Test { test }`)
   })
 })
@@ -287,11 +284,9 @@ test('allows GraphQL DocumentNode queries with DocumentNode dependencies', () =>
     wow
   }
 }
-
 fragment test on Test {
   test
-}
-`)
+}`)
   })
 })
 
@@ -327,7 +322,7 @@ function testFetchMock(params, cb) {
   }
 
   rivet.__with__(
-    'GraphQLClient',
+    'graphql_request_1.GraphQLClient',
     MockGraphQLClient
   )(() => {
     return createTestInstance()(params)

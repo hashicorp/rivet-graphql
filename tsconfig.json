@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
+    "target": "es2020",
     "lib": ["es2020"],
     "module": "commonjs",
-    "allowJs": true,
     "declaration": true,
-    "emitDeclarationOnly": true,
-    "declarationMap": true,
     "downlevelIteration": true,
     "skipLibCheck": true
   },
-  "include": ["index.js"]
+  "include": ["index.ts"]
 }
